@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-      "install-all": "npm install --prefix client && npm install --prefix server"
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "install-all": "npm install --prefix client && npm install --prefix server"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +13,8 @@
   "type": "commonjs",
   "devDependencies": {
     "concurrently": "^10.0.6"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9"
   }
 }
