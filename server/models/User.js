@@ -4,19 +4,9 @@ import { ROLES } from "../utils/constants.js";
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true, maxlength: 80 },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-    },
-    passwordHash: { type: String, select: false },
-    role: {
-      type: String,
-      enum: Object.values(ROLES),
-      default: ROLES.CANDIDATE,
-    },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    passwordHash: { type: String, select: false }, 
+    role: { type: String, enum: Object.values(ROLES), default: ROLES.CANDIDATE },
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", default: null },
 
     googleId: { type: String, unique: true, sparse: true },
@@ -26,11 +16,12 @@ const userSchema = new mongoose.Schema(
     emailVerified: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
     lastLoginAt: { type: Date },
+    passwordChangedAt: { type: Date },
 
-    emailVerifyToken: { type: String, select: false },
-    emailVerifyExpires: { type: Date, select: false },
-    passwordResetToken: { type: String, select: false },
-    passwordResetExpires: { type: Date, select: false },
+    resetOtpHash: { type: String, select: false },
+    resetOtpExpires: { type: Date, select: false },
+    resetOtpAttempts: { type: Number, default: 0, select: false },
+    resetOtpSentAt: { type: Date, select: false },
   },
   { timestamps: true }
 );
@@ -38,10 +29,10 @@ const userSchema = new mongoose.Schema(
 userSchema.set("toJSON", {
   transform: (doc, ret) => {
     delete ret.passwordHash;
-    delete ret.emailVerifyToken;
-    delete ret.emailVerifyExpires;
-    delete ret.passwordResetToken;
-    delete ret.passwordResetExpires;
+    delete ret.resetOtpHash;
+    delete ret.resetOtpExpires;
+    delete ret.resetOtpAttempts;
+    delete ret.resetOtpSentAt;
     delete ret.__v;
     return ret;
   },
