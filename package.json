@@ -1,0 +1,17 @@
+{
+  "name": "job-protal-ats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+      "install-all": "npm install --prefix client && npm install --prefix server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  }
+}
