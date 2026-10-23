@@ -10,6 +10,8 @@ import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import companyRoutes from "./routes/companyRoutes.js";
+import jobRoutes from "./routes/jobRoutes.js";
+import adminJobRoutes from "./routes/adminJobRoutes.js";
 
 const app = express();
 
@@ -38,6 +40,11 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/companies", companyRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin/jobs", adminJobRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/companies", companyRoutes);
+app.use("/api/jobs", jobRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

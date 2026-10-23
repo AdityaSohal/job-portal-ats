@@ -34,3 +34,25 @@ export const companyRejectedEmail = (companyName, reason) => ({
       <p>Update your company details in your dashboard and it will be reviewed again.</p>
     </div>`,
 });
+
+export const jobApprovedEmail = (jobTitle) => ({
+  subject: "Your job post is live",
+  text: `Your job "${jobTitle}" has been approved and is now visible to candidates.`,
+  html: `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px">
+      <h2>Your job is live</h2>
+      <p><strong>${esc(jobTitle)}</strong> has been approved and is now visible to candidates.</p>
+    </div>`,
+});
+
+export const jobRejectedEmail = (jobTitle, reason) => ({
+  subject: "Your job post needs changes",
+  text: `Your job "${jobTitle}" was not approved. Reason: ${reason}. Edit the job to resubmit it for review.`,
+  html: `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px">
+      <h2>Job not approved</h2>
+      <p><strong>${esc(jobTitle)}</strong> was not approved.</p>
+      <p><strong>Reason:</strong> ${esc(reason)}</p>
+      <p>Edit the job to resubmit it for review.</p>
+    </div>`,
+});

@@ -1,0 +1,32 @@
+$kind: http-request
+name: ""
+url: http://localhost:5000/api/auth/login
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"title\": \"Backend Developer\",\r
+
+    \  \"description\": \"Build and maintain REST APIs using Node.js, Express and MongoDB for our hiring platform.\",\r
+
+    \  \"skills\": [\"Node.js\", \"express\", \"MongoDB\", \"node.js\"],\r
+
+    \  \"location\": \"Bengaluru\",\r
+
+    \  \"workMode\": \"hybrid\",\r
+
+    \  \"employmentType\": \"full-time\",\r
+
+    \  \"minExp\": 1,\r
+
+    \  \"maxExp\": 3,\r
+
+    \  \"ctcRange\": { \"min\": 6, \"max\": 12 },\r
+
+    \  \"openings\": 2,\r
+
+    \  \"deadline\": \"2026-12-31\"\r
+
+    }"
+order: 1000
