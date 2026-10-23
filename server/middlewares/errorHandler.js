@@ -16,6 +16,9 @@ export const errorHandler = (err, req, res, next) => {
     message = "Invalid ID";
   } else if (err.name === "ValidationError") {
     status = 400;
+  } else if (err.name === "MulterError") {
+  status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+  message = err.code === "LIMIT_FILE_SIZE" ? "File is too large (maximum 2 MB)" : "Invalid file upload";
   }
 
   if (status === 500) {

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { WORK_MODES } from "../utils/constants.js";
+import { computeCompletion } from "../utils/profileCompletion.js";
 
 const educationSchema = new mongoose.Schema({
   institution: { type: String, required: true, trim: true },
@@ -56,5 +57,8 @@ const candidateProfileSchema = new mongoose.Schema(
 );
 
 candidateProfileSchema.index({ skills: 1 });
+candidateProfileSchema.pre("save", function () {
+  this.profileCompletion = computeCompletion(this);
+});
 
 export default mongoose.model("CandidateProfile", candidateProfileSchema);
