@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js",
-    "seed:admin": "node scripts/seedAdmin.js"
+    "seed:admin": "node scripts/seedAdmin.js",
+    "seed:jobs": "node scripts/seedJobs.js",
+    "explain:search": "node scripts/explainSearch.js"
   },
   "keywords": [],
   "author": "",

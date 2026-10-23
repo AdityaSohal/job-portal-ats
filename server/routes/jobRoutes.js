@@ -6,6 +6,8 @@ import { ROLES, WORK_MODES, EMPLOYMENT_TYPES } from "../utils/constants.js";
 import {
   createJob, listMyJobs, getMyJob, updateJob, closeJob, deleteJob,
 } from "../controllers/jobController.js";
+import { searchLimiter } from "../middlewares/rateLimiters.js";
+import { searchJobs, getPublicJob } from "../controllers/publicJobController.js";
 
 const router = Router();
 const recruiterOnly = [protect, authorize(ROLES.RECRUITER)];
@@ -45,6 +47,29 @@ router.get(
   validate,
   listMyJobs
 );
+const listOf = (allowed) => (value) => {
+  const items = String(value).split(",").map((s) => s.trim()).filter(Boolean);
+  if (!items.length || !items.every((i) => allowed.includes(i))) {
+    throw new Error(`Must be a comma-separated list of: ${allowed.join(", ")}`);
+  }
+  return true;
+};
+
+const searchRules = [
+  query("q").optional({ values: "falsy" }).isString().trim().isLength({ min: 2, max: 100 }),
+  query("location").optional({ values: "falsy" }).isString().trim().isLength({ min: 1, max: 100 }),
+  query("workMode").optional({ values: "falsy" }).isString().bail().custom(listOf(WORK_MODES)),
+  query("employmentType").optional({ values: "falsy" }).isString().bail().custom(listOf(EMPLOYMENT_TYPES)),
+  query("exp").optional({ values: "falsy" }).isFloat({ min: 0, max: 60 }),
+  query("ctc").optional({ values: "falsy" }).isFloat({ min: 0, max: 1000 }),
+  query("skills").optional({ values: "falsy" }).isString().isLength({ max: 300 }),
+  query("sort").optional({ values: "falsy" }).isIn(["latest", "deadline"]),
+  query("page").optional({ values: "falsy" }).isInt({ min: 1, max: 100 }),
+  query("limit").optional({ values: "falsy" }).isInt({ min: 1, max: 50 }),
+];
+
+router.get("/", searchLimiter, searchRules, validate, searchJobs);
+router.get("/:id", searchLimiter, [idRule], validate, getPublicJob);
 router.get("/mine/:id", recruiterOnly, [idRule], validate, getMyJob);
 
 router.post("/", recruiterOnly, requireApprovedCompany, jobRules(true), validate, createJob);
