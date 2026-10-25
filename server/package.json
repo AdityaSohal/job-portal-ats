@@ -8,7 +8,9 @@
     "start": "node index.js",
     "seed:admin": "node scripts/seedAdmin.js",
     "seed:jobs": "node scripts/seedJobs.js",
-    "explain:search": "node scripts/explainSearch.js"
+    "explain:search": "node scripts/explainSearch.js",
+    "db:reset": "node scripts/resetDb.js",
+    "seed:apps": "node scripts/seedApplications.js"
   },
   "keywords": [],
   "author": "",
