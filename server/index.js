@@ -16,6 +16,9 @@ import profileRoutes from "./routes/profileRoutes.js";
 import applicationRoutes from "./routes/applicationRoutes.js";
 import savedJobRoutes from "./routes/savedJobRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import adminUserRoutes from "./routes/adminUserRoutes.js";
+import adminAnalyticsRoutes from "./routes/adminAnalyticsRoutes.js";
+import adminAuditRoutes from "./routes/adminAuditRoutes.js";
 
 const app = express();
 
@@ -53,6 +56,11 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/saved-jobs", savedJobRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/admin/jobs", adminJobRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
+app.use("/api/admin/audit-logs", adminAuditRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

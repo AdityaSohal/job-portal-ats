@@ -15,6 +15,8 @@ const userSchema = new mongoose.Schema(
 
     emailVerified: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
+    blockedReason: { type: String, maxlength: 500 },
+    blockedAt: { type: Date },
     lastLoginAt: { type: Date },
     passwordChangedAt: { type: Date },
 
@@ -37,5 +39,5 @@ userSchema.set("toJSON", {
     return ret;
   },
 });
-
+userSchema.index({ role: 1, createdAt: -1 });
 export default mongoose.model("User", userSchema);
