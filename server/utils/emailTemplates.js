@@ -99,3 +99,40 @@ export const stageChangeEmail = (jobTitle, companyName, stage) => {
       </div>`,
   };
 };
+
+export const jobAlertEmail = (alertName, jobs, total, baseUrl) => {
+  const lines = jobs.map((j) => ({
+    title: j.title,
+    meta: [
+      j.companyId?.name || "Company",
+      j.location,
+      j.workMode,
+      j.ctcRange?.max ? `up to ${j.ctcRange.max} LPA` : null,
+    ].filter(Boolean).join(" · "),
+    url: `${baseUrl}/jobs/${j._id}`,
+  }));
+  const more = total > jobs.length ? `${total - jobs.length} more jobs match this alert.` : "";
+  const subject = total === 1 ? "1 new job matches your alert" : `${total} new jobs match your alert`;
+
+  const text = [`New jobs for "${alertName}":`, ...lines.map((l) => `${l.title}\n${l.meta}\n${l.url}`), more]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;padding:24px">
+      <h2>${esc(subject)}</h2>
+      <p style="color:#666">Alert: ${esc(alertName)}</p>
+      ${lines
+        .map(
+          (l) => `
+        <div style="padding:12px 0;border-top:1px solid #eee">
+          <a href="${esc(l.url)}" style="font-size:16px;font-weight:bold;color:#2563eb;text-decoration:none">${esc(l.title)}</a>
+          <div style="color:#555;font-size:14px;margin-top:4px">${esc(l.meta)}</div>
+        </div>`
+        )
+        .join("")}
+      ${more ? `<p style="color:#666">${esc(more)}</p>` : ""}
+    </div>`;
+
+  return { subject, text, html };
+};

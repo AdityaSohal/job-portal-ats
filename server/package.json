@@ -10,7 +10,8 @@
     "seed:jobs": "node scripts/seedJobs.js",
     "explain:search": "node scripts/explainSearch.js",
     "db:reset": "node scripts/resetDb.js",
-    "seed:apps": "node scripts/seedApplications.js"
+    "seed:apps": "node scripts/seedApplications.js",
+    "test": "node --test tests/logic.test.js"
   },
   "keywords": [],
   "author": "",

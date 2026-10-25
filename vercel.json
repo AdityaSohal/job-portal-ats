@@ -1,23 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
-    "client": {
-      "root": "client",
-      "framework": "vite"
-    },
-    "server": {
-      "root": "server",
-      "framework": "express"
-    }
+    "client": { "root": "client", "framework": "vite" },
+    "server": { "root": "server", "framework": "express" }
   },
+  "crons": [
+    { "path": "/api/cron/daily", "schedule": "30 2 * * *" }
+  ],
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": { "service": "server" }
-    },
-    {
-      "source": "/(.*)",
-      "destination": { "service": "client" }
-    }
+    { "source": "/api/(.*)", "destination": { "service": "server" } },
+    { "source": "/(.*)", "destination": { "service": "client" } }
   ]
 }

@@ -8,6 +8,7 @@ import SavedJob from "../models/SavedJob.js";
 import AuditLog from "../models/AuditLog.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import JobAlert from "../models/JobAlert.js";
 import { ROLES } from "../utils/constants.js";
 import { deletePrivate } from "../utils/cloudinary.js";
 
@@ -168,9 +169,10 @@ export const deleteUser = asyncHandler(async (req, res) => {
       )
     );
 
-    await Promise.all([
+        await Promise.all([
       Application.deleteMany({ candidateId: id }),
       SavedJob.deleteMany({ userId: id }),
+      JobAlert.deleteMany({ userId: id }),
       CandidateProfile.deleteOne({ userId: id }),
     ]);
     await Promise.allSettled([...keys].map((k) => deletePrivate(k)));
