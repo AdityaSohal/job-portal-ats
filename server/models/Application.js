@@ -35,5 +35,6 @@ const applicationSchema = new mongoose.Schema(
 applicationSchema.index({ jobId: 1, candidateId: 1 }, { unique: true });
 applicationSchema.index({ candidateId: 1, createdAt: -1 });
 applicationSchema.index({ jobId: 1, stage: 1, matchScore: -1 });
+applicationSchema.index({ jobId: 1, matchScore: -1, createdAt: 1 });
 
 export default mongoose.model("Application", applicationSchema);

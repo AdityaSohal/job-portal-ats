@@ -23,3 +23,11 @@ export const sendEmail = ({ to, subject, text, html }) =>
     text,
     html,
   });
+
+export const sendEmailSafe = async (options) => {
+  try {
+    await sendEmail(options);
+  } catch (err) {
+    console.error("Email failed:", err.message);
+  }
+};

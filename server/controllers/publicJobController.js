@@ -9,7 +9,7 @@ const HIDDEN = { recruiterId: 0, reviewedBy: 0, reviewedAt: 0, rejectionReason: 
 
 const COMPANY_FIELDS = "name logoUrl website description industry size location";
 
-const visibleNow = () => ({
+export const visibleNow = () => ({
   status: "active",
   $or: [{ deadline: null }, { deadline: { $gt: new Date() } }],
 });
@@ -22,7 +22,7 @@ export const searchJobs = asyncHandler(async (req, res) => {
   const page = Math.max(parseInt(req.query.page) || 1, 1);
   const limit = Math.min(parseInt(req.query.limit) || 10, 50);
 
-  const filter = visibleNow();
+ const filter = visibleNow();
 
   if (q) filter.$text = { $search: q };
   if (location) filter.location = { $regex: escapeRegex(location.trim()), $options: "i" };

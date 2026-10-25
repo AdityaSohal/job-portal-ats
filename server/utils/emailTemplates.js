@@ -56,3 +56,46 @@ export const jobRejectedEmail = (jobTitle, reason) => ({
       <p>Edit the job to resubmit it for review.</p>
     </div>`,
 });
+
+export const applicationReceivedEmail = (jobTitle, companyName) => ({
+  subject: "Application received",
+  text: `Your application for ${jobTitle} at ${companyName} has been received.`,
+  html: `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px">
+      <h2>Application received</h2>
+      <p>Your application for <strong>${esc(jobTitle)}</strong> at ${esc(companyName)} has been received.</p>
+    </div>`,
+});
+
+const STAGE_COPY = {
+  shortlisted: {
+    subject: "You have been shortlisted",
+    body: (j, c) => `Good news! Your application for ${j} at ${c} has been shortlisted.`,
+  },
+  interview: {
+    subject: "Interview update",
+    body: (j, c) => `Your application for ${j} at ${c} has moved to the interview stage. The recruiter will share the details with you.`,
+  },
+  offered: {
+    subject: "You have received an offer",
+    body: (j, c) => `Congratulations! ${c} has made you an offer for ${j}.`,
+  },
+  rejected: {
+    subject: "Update on your application",
+    body: (j, c) => `Thank you for applying for ${j} at ${c}. Unfortunately, they have decided not to move forward with your application.`,
+  },
+};
+
+export const stageChangeEmail = (jobTitle, companyName, stage) => {
+  const copy = STAGE_COPY[stage];
+  const message = copy.body(jobTitle, companyName);
+  return {
+    subject: copy.subject,
+    text: message,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px">
+        <h2>${esc(copy.subject)}</h2>
+        <p>${esc(message)}</p>
+      </div>`,
+  };
+};

@@ -2,19 +2,24 @@ import { Router } from "express";
 import { body, param, query } from "express-validator";
 import { protect, authorize, requireApprovedCompany } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
-import { ROLES, WORK_MODES, EMPLOYMENT_TYPES } from "../utils/constants.js";
+import { searchLimiter } from "../middlewares/rateLimiters.js";
+import { ROLES, WORK_MODES, EMPLOYMENT_TYPES, APPLICATION_STAGES } from "../utils/constants.js";
 import {
   createJob, listMyJobs, getMyJob, updateJob, closeJob, deleteJob,
 } from "../controllers/jobController.js";
-import { searchLimiter } from "../middlewares/rateLimiters.js";
 import { searchJobs, getPublicJob } from "../controllers/publicJobController.js";
+import { listApplicants } from "../controllers/applicationController.js";
 
 const router = Router();
 const recruiterOnly = [protect, authorize(ROLES.RECRUITER)];
+const idRule = param("id").isMongoId();
+
 const jobRules = (required) => {
   const f = (name) => {
     const chain = body(name);
-    return required ? chain.exists({ values: "falsy" }).withMessage(`${name} is required`).bail() : chain.optional();
+    return required
+      ? chain.exists({ values: "falsy" }).withMessage(`${name} is required`).bail()
+      : chain.optional();
   };
   return [
     f("title").isString().trim().isLength({ min: 3, max: 120 }),
@@ -34,19 +39,6 @@ const jobRules = (required) => {
   ];
 };
 
-const idRule = param("id").isMongoId();
-
-router.get(
-  "/mine",
-  recruiterOnly,
-  [
-    query("status").optional().isIn(["pending", "active", "closed", "rejected", "expired"]),
-    query("page").optional().isInt({ min: 1 }),
-    query("limit").optional().isInt({ min: 1, max: 50 }),
-  ],
-  validate,
-  listMyJobs
-);
 const listOf = (allowed) => (value) => {
   const items = String(value).split(",").map((s) => s.trim()).filter(Boolean);
   if (!items.length || !items.every((i) => allowed.includes(i))) {
@@ -68,13 +60,39 @@ const searchRules = [
   query("limit").optional({ values: "falsy" }).isInt({ min: 1, max: 50 }),
 ];
 
+router.get(
+  "/mine",
+  recruiterOnly,
+  [
+    query("status").optional().isIn(["pending", "active", "closed", "rejected", "expired"]),
+    query("page").optional().isInt({ min: 1 }),
+    query("limit").optional().isInt({ min: 1, max: 50 }),
+  ],
+  validate,
+  listMyJobs
+);
+router.get("/mine/:id", recruiterOnly, [idRule], validate, getMyJob);
+
 router.get("/", searchLimiter, searchRules, validate, searchJobs);
 router.get("/:id", searchLimiter, [idRule], validate, getPublicJob);
-router.get("/mine/:id", recruiterOnly, [idRule], validate, getMyJob);
 
 router.post("/", recruiterOnly, requireApprovedCompany, jobRules(true), validate, createJob);
 router.patch("/:id", recruiterOnly, requireApprovedCompany, [idRule, ...jobRules(false)], validate, updateJob);
 router.patch("/:id/close", recruiterOnly, [idRule], validate, closeJob);
 router.delete("/:id", recruiterOnly, [idRule], validate, deleteJob);
+
+router.get(
+  "/:id/applicants",
+  recruiterOnly,
+  [
+    idRule,
+    query("stage").optional({ values: "falsy" }).isIn(APPLICATION_STAGES),
+    query("sort").optional({ values: "falsy" }).isIn(["match", "latest"]),
+    query("page").optional({ values: "falsy" }).isInt({ min: 1, max: 100 }),
+    query("limit").optional({ values: "falsy" }).isInt({ min: 1, max: 50 }),
+  ],
+  validate,
+  listApplicants
+);
 
 export default router;
