@@ -18,7 +18,8 @@ const jobSchema = new mongoose.Schema(
       max: { type: Number, min: 0 },
     },
     openings: { type: Number, min: 1, default: 1 },
-    status: { type: String, enum: JOB_STATUS, default: "pending" }, // admin approves
+    hiredCount: { type: Number, min: 0, default: 0 }, 
+    status: { type: String, enum: JOB_STATUS, default: "pending" }, 
     rejectionReason: { type: String },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     reviewedAt: { type: Date },
@@ -27,11 +28,11 @@ const jobSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-jobSchema.index({ status: 1, createdAt: 1 });
 jobSchema.index({ status: 1, workMode: 1, location: 1, createdAt: -1, minExp: 1 });
 jobSchema.index({ status: 1, skills: 1, createdAt: -1 });
 jobSchema.index({ recruiterId: 1, status: 1, createdAt: -1 });
 jobSchema.index({ status: 1, deadline: 1 });
+jobSchema.index({ status: 1, createdAt: 1 });
 jobSchema.index({ title: "text", description: "text" }, { weights: { title: 5, description: 1 } });
 
 export default mongoose.model("Job", jobSchema);

@@ -14,15 +14,22 @@ export const APPLICATION_STAGES = [
   "shortlisted",
   "interview",
   "offered",
+  "hired",
   "rejected",
   "withdrawn",
+  "declined",
 ];
 
 export const STAGE_TRANSITIONS = {
   applied: ["shortlisted", "rejected", "withdrawn"],
   shortlisted: ["interview", "rejected", "withdrawn"],
   interview: ["offered", "rejected", "withdrawn"],
-  offered: ["rejected", "withdrawn"],
+  offered: ["hired", "declined", "rejected"],
+  hired: [],
   rejected: [],
   withdrawn: [],
+  declined: [],
 };
+
+export const INTERVIEW_MODES = ["video", "phone", "onsite"];
+export const INTERVIEW_STATUS = ["scheduled", "confirmed", "reschedule_requested", "completed", "cancelled"];

@@ -10,7 +10,8 @@ import { connectDB } from "./configs/db.js";
 import { validateEnv } from "./utils/validateEnv.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 import { sanitizeInput } from "./middlewares/sanitize.js";
-
+import interviewRoutes from "./routes/interviewRoutes.js";
+import accountRoutes from "./routes/accountRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminJobRoutes from "./routes/adminJobRoutes.js";
 import adminUserRoutes from "./routes/adminUserRoutes.js";
@@ -93,6 +94,8 @@ app.use("/api/applications", applicationRoutes);
 app.use("/api/saved-jobs", savedJobRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/alerts", alertRoutes);
+app.use("/api/interviews", interviewRoutes);
+app.use("/api/account", accountRoutes);
 app.use("/api/cron", cronRoutes);
 
 app.use(notFound);

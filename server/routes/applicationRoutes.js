@@ -3,12 +3,14 @@ import { body, param, query } from "express-validator";
 import { protect, authorize } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { applyLimiter } from "../middlewares/rateLimiters.js";
+import { interviewRules } from "../middlewares/interviewRules.js";
 import { ROLES, APPLICATION_STAGES } from "../utils/constants.js";
 import { RECRUITER_TARGETS } from "../utils/applicationStateMachine.js";
 import {
-  applyToJob, listMyApplications, getMyApplication, withdrawApplication,
+  applyToJob, listMyApplications, getMyApplication, withdrawApplication, respondToOffer,
   getApplication, changeStage, addNote, downloadApplicantResume,
 } from "../controllers/applicationController.js";
+import { scheduleInterview } from "../controllers/interviewController.js";
 
 const router = Router();
 router.use(protect);
@@ -43,6 +45,13 @@ router.get(
 );
 router.get("/me/:id", candidateOnly, [idRule], validate, getMyApplication);
 router.patch("/:id/withdraw", candidateOnly, [idRule], validate, withdrawApplication);
+router.patch(
+  "/:id/respond",
+  candidateOnly,
+  [idRule, body("decision").isIn(["accept", "decline"]).withMessage("Decision must be accept or decline")],
+  validate,
+  respondToOffer
+);
 
 router.get("/:id", recruiterOnly, [idRule], validate, getApplication);
 
@@ -53,6 +62,7 @@ router.patch(
     idRule,
     body("stage").isIn(RECRUITER_TARGETS).withMessage(`Stage must be one of: ${RECRUITER_TARGETS.join(", ")}`),
     body("note").optional({ values: "falsy" }).isString().bail().trim().isLength({ max: 500 }),
+    body("feedback").optional({ values: "falsy" }).isString().bail().trim().isLength({ max: 1000 }),
   ],
   validate,
   changeStage
@@ -67,5 +77,7 @@ router.post(
 );
 
 router.get("/:id/resume", recruiterOnly, [idRule], validate, downloadApplicantResume);
+
+router.post("/:id/interviews", recruiterOnly, [idRule, ...interviewRules(true)], validate, scheduleInterview);
 
 export default router;

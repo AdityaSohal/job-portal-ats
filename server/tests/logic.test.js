@@ -5,6 +5,7 @@ import { STAGE_TRANSITIONS, APPLICATION_STAGES } from "../utils/constants.js";
 import { skillBreakdown } from "../utils/matchScore.js";
 import { computeCompletion } from "../utils/profileCompletion.js";
 import { normalizeSkills } from "../utils/skills.js";
+import { csvCell, toCsv } from "../utils/csv.js";
 
 test("recruiters get only forward moves, plus rejection", () => {
   assert.deepEqual(allowedFor("applied", "recruiter"), ["shortlisted", "rejected"]);
@@ -19,22 +20,29 @@ test("recruiters cannot skip stages", () => {
   assert.ok(!allowedFor("shortlisted", "recruiter").includes("offered"));
 });
 
-test("recruiters can never withdraw an application", () => {
+test("recruiters can never withdraw, accept or decline for the candidate", () => {
   for (const stage of APPLICATION_STAGES) {
-    assert.ok(!allowedFor(stage, "recruiter").includes("withdrawn"), stage);
+    const moves = allowedFor(stage, "recruiter");
+    for (const forbidden of ["withdrawn", "hired", "declined"]) {
+      assert.ok(!moves.includes(forbidden), `${stage} -> ${forbidden}`);
+    }
   }
 });
 
-test("candidates can only withdraw, and only from non-final stages", () => {
-  for (const stage of ["applied", "shortlisted", "interview", "offered"]) {
+test("candidates can withdraw until they receive an offer", () => {
+  for (const stage of ["applied", "shortlisted", "interview"]) {
     assert.deepEqual(allowedFor(stage, "candidate"), ["withdrawn"], stage);
   }
 });
 
-test("rejected and withdrawn are final for everyone", () => {
-  for (const stage of ["rejected", "withdrawn"]) {
-    assert.deepEqual(allowedFor(stage, "recruiter"), []);
-    assert.deepEqual(allowedFor(stage, "candidate"), []);
+test("candidates answer an offer by accepting or declining", () => {
+  assert.deepEqual(allowedFor("offered", "candidate"), ["hired", "declined"]);
+});
+
+test("hired, rejected, withdrawn and declined are final for everyone", () => {
+  for (const stage of ["hired", "rejected", "withdrawn", "declined"]) {
+    assert.deepEqual(allowedFor(stage, "recruiter"), [], stage);
+    assert.deepEqual(allowedFor(stage, "candidate"), [], stage);
   }
 });
 
@@ -97,4 +105,29 @@ test("profile completion: a complete profile is 100", () => {
 
 test("profile completion: sections add up (headline 10 + three skills 20)", () => {
   assert.equal(computeCompletion({ headline: "Dev", skills: ["a", "b", "c"] }), 30);
+});
+
+test("csv: cells that start like a formula are neutralised", () => {
+  assert.equal(csvCell("=1+1"), "'=1+1");
+  assert.equal(csvCell("+91 98765"), "'+91 98765");
+  assert.equal(csvCell("@SUM(A1)"), "'@SUM(A1)");
+  assert.equal(csvCell("-2+3"), "'-2+3");
+  assert.equal(csvCell(-5), "-5"); 
+});
+
+test("csv: commas, quotes and line breaks are quoted correctly", () => {
+  assert.equal(csvCell('say "hi", ok'), '"say ""hi"", ok"');
+  assert.equal(csvCell("a\nb"), '"a\nb"');
+});
+
+test("csv: empty values, zero, lists and dates", () => {
+  assert.equal(csvCell(null), "");
+  assert.equal(csvCell(undefined), "");
+  assert.equal(csvCell(0), "0");
+  assert.equal(csvCell(["react", "node.js"]), "react; node.js");
+  assert.equal(csvCell(new Date("2026-01-02T03:04:05.000Z")), "2026-01-02T03:04:05.000Z");
+});
+
+test("csv: rows are joined with CRLF", () => {
+  assert.equal(toCsv(["a", "b"], [[1, "x,y"], [null, "z"]]), 'a,b\r\n1,"x,y"\r\n,z');
 });

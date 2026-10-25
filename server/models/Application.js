@@ -6,7 +6,8 @@ const stageHistorySchema = new mongoose.Schema({
   to: { type: String, enum: APPLICATION_STAGES, required: true },
   changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   at: { type: Date, default: Date.now },
-  note: { type: String, maxlength: 500 },
+  note: { type: String, maxlength: 500 }, 
+  feedback: { type: String, maxlength: 1000 }, 
 });
 
 const noteSchema = new mongoose.Schema({
@@ -27,7 +28,7 @@ const applicationSchema = new mongoose.Schema(
     stage: { type: String, enum: APPLICATION_STAGES, default: "applied" },
     stageHistory: [stageHistorySchema],
     recruiterNotes: [noteSchema],
-    matchScore: { type: Number, min: 0, max: 100, default: null },
+    matchScore: { type: Number, min: 0, max: 100, default: null }, 
   },
   { timestamps: true }
 );

@@ -8,13 +8,12 @@ import {
   createJob, listMyJobs, getMyJob, updateJob, closeJob, deleteJob,
 } from "../controllers/jobController.js";
 import { searchJobs, getPublicJob } from "../controllers/publicJobController.js";
-import { listApplicants } from "../controllers/applicationController.js";
+import { listApplicants, exportApplicants } from "../controllers/applicationController.js";
 
 const router = Router();
 const recruiterOnly = [protect, authorize(ROLES.RECRUITER)];
 const idRule = param("id").isMongoId();
 
-// required=true on create, optional on edit
 const jobRules = (required) => {
   const f = (name) => {
     const chain = body(name);
@@ -61,6 +60,14 @@ const searchRules = [
   query("limit").optional({ values: "falsy" }).isInt({ min: 1, max: 50 }),
 ];
 
+const applicantFilterRules = [
+  query("stage").optional({ values: "falsy" }).isIn(APPLICATION_STAGES),
+  query("q").optional({ values: "falsy" }).isString().bail().trim().isLength({ min: 2, max: 100 }),
+  query("skills").optional({ values: "falsy" }).isString().isLength({ max: 300 }),
+  query("exp").optional({ values: "falsy" }).isFloat({ min: 0, max: 60 }),
+  query("minMatch").optional({ values: "falsy" }).isInt({ min: 0, max: 100 }),
+];
+
 router.get(
   "/mine",
   recruiterOnly,
@@ -87,7 +94,7 @@ router.get(
   recruiterOnly,
   [
     idRule,
-    query("stage").optional({ values: "falsy" }).isIn(APPLICATION_STAGES),
+    ...applicantFilterRules,
     query("sort").optional({ values: "falsy" }).isIn(["match", "latest"]),
     query("page").optional({ values: "falsy" }).isInt({ min: 1, max: 100 }),
     query("limit").optional({ values: "falsy" }).isInt({ min: 1, max: 50 }),
@@ -95,5 +102,6 @@ router.get(
   validate,
   listApplicants
 );
+router.get("/:id/applicants/export", recruiterOnly, [idRule, ...applicantFilterRules], validate, exportApplicants);
 
 export default router;
