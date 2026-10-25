@@ -1,20 +1,13 @@
 import Company from "../models/Company.js";
 import User from "../models/User.js";
-import AuditLog from "../models/AuditLog.js";
+import Job from "../models/Job.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendEmail } from "../utils/sendEmail.js";
+import { writeAudit } from "../utils/audit.js";
 import { companyApprovedEmail, companyRejectedEmail } from "../utils/emailTemplates.js";
 
-const audit = (req, action, targetId, meta) =>
-  AuditLog.create({
-    actorId: req.user._id,
-    action,
-    targetType: "Company",
-    targetId,
-    meta,
-    ip: req.ip,
-  });
+const audit = (req, action, targetId, meta) => writeAudit(req, "Job", action, targetId, meta);
 
 const notifyOwner = async (company, template) => {
   try {
@@ -34,7 +27,7 @@ export const listCompanies = asyncHandler(async (req, res) => {
 
   const [items, total] = await Promise.all([
     Company.find(filter)
-      .sort({ createdAt: status === "pending" ? 1 : -1 })
+      .sort({ createdAt: status === "pending" ? 1 : -1 }) 
       .skip((page - 1) * limit)
       .limit(limit)
       .populate("createdBy", "name email createdAt"),
@@ -61,9 +54,14 @@ export const approveCompany = asyncHandler(async (req, res) => {
     throw new ApiError(exists ? 409 : 404, exists ? "Company is already approved" : "Company not found");
   }
 
-  await audit(req, "COMPANY_APPROVED", company._id, { name: company.name });
+  const restored = await Job.updateMany(
+    { companyId: company._id, status: "suspended" },
+    { $set: { status: "active" } }
+  );
+
+  await audit(req, "COMPANY_APPROVED", company._id, { name: company.name, restoredJobs: restored.modifiedCount });
   await notifyOwner(company, companyApprovedEmail(company.name));
-  res.json({ company });
+  res.json({ company, restoredJobs: restored.modifiedCount });
 });
 
 export const rejectCompany = asyncHandler(async (req, res) => {
@@ -85,7 +83,16 @@ export const rejectCompany = asyncHandler(async (req, res) => {
     throw new ApiError(exists ? 409 : 404, exists ? "Company is already rejected" : "Company not found");
   }
 
-  await audit(req, "COMPANY_REJECTED", company._id, { name: company.name, reason });
+  const suspended = await Job.updateMany(
+    { companyId: company._id, status: "active" },
+    { $set: { status: "suspended" } }
+  );
+
+  await audit(req, "COMPANY_REJECTED", company._id, {
+    name: company.name,
+    reason,
+    suspendedJobs: suspended.modifiedCount,
+  });
   await notifyOwner(company, companyRejectedEmail(company.name, reason));
-  res.json({ company });
+  res.json({ company, suspendedJobs: suspended.modifiedCount });
 });

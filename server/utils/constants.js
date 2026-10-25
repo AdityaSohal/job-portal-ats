@@ -6,7 +6,7 @@ export const ROLES = {
 
 export const WORK_MODES = ["onsite", "remote", "hybrid"];
 export const EMPLOYMENT_TYPES = ["full-time", "part-time", "internship", "contract"];
-export const JOB_STATUS = ["pending", "active", "closed", "rejected", "expired"];
+export const JOB_STATUS = ["pending", "active", "closed", "rejected", "expired", "suspended"];
 export const COMPANY_STATUS = ["pending", "approved", "rejected"];
 
 export const APPLICATION_STAGES = [

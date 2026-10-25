@@ -1,31 +1,23 @@
-import mongoose from "mongoose";
 import User from "../models/User.js";
 import Company from "../models/Company.js";
 import CandidateProfile from "../models/CandidateProfile.js";
 import Job from "../models/Job.js";
 import Application from "../models/Application.js";
 import SavedJob from "../models/SavedJob.js";
-import AuditLog from "../models/AuditLog.js";
+import JobAlert from "../models/JobAlert.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
-import JobAlert from "../models/JobAlert.js";
 import { ROLES } from "../utils/constants.js";
 import { deletePrivate } from "../utils/cloudinary.js";
+import { writeAudit } from "../utils/audit.js";
+import { runInTransaction } from "../utils/transaction.js";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const FIELDS =
   "name email role isBlocked blockedReason blockedAt authProvider emailVerified lastLoginAt createdAt companyId";
 
-const audit = (req, action, targetId, meta) =>
-  AuditLog.create({
-    actorId: req.user._id,
-    action,
-    targetType: "User",
-    targetId,
-    meta,
-    ip: req.ip,
-  });
+const audit = (req, action, targetId, meta) => writeAudit(req, "User", action, targetId, meta);
 
 const loadTarget = async (id) => {
   const target = await User.findById(id).select("name email role companyId isBlocked");
@@ -123,7 +115,7 @@ export const blockUser = asyncHandler(async (req, res) => {
   let closedJobs = 0;
   if (user.role === ROLES.RECRUITER) {
     const result = await Job.updateMany(
-      { recruiterId: user._id, status: { $in: ["pending", "active"] } },
+      { recruiterId: user._id, status: { $in: ["pending", "active", "suspended"] } },
       { $set: { status: "closed" } }
     );
     closedJobs = result.modifiedCount;
@@ -156,6 +148,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
   const target = await loadTarget(req.params.id);
   const id = target._id;
   let removed = {};
+  let keys = [];
 
   if (target.role === ROLES.CANDIDATE) {
     const [profile, apps] = await Promise.all([
@@ -163,35 +156,40 @@ export const deleteUser = asyncHandler(async (req, res) => {
       Application.find({ candidateId: id }).select("resumeKey").lean(),
     ]);
 
-    const keys = new Set(
-      [...(profile?.resumes || []).map((r) => r.key), ...apps.map((a) => a.resumeKey)].filter((k) =>
-        k?.startsWith(`resumes/${id}/`)
-      )
-    );
+    keys = [
+      ...new Set(
+        [...(profile?.resumes || []).map((r) => r.key), ...apps.map((a) => a.resumeKey)].filter((k) =>
+          k?.startsWith(`resumes/${id}/`)
+        )
+      ),
+    ];
 
-        await Promise.all([
-      Application.deleteMany({ candidateId: id }),
-      SavedJob.deleteMany({ userId: id }),
-      JobAlert.deleteMany({ userId: id }),
-      CandidateProfile.deleteOne({ userId: id }),
-    ]);
-    await Promise.allSettled([...keys].map((k) => deletePrivate(k)));
+    await runInTransaction(async (session) => {
+      await Application.deleteMany({ candidateId: id }, { session });
+      await SavedJob.deleteMany({ userId: id }, { session });
+      await JobAlert.deleteMany({ userId: id }, { session });
+      await CandidateProfile.deleteOne({ userId: id }, { session });
+      await User.deleteOne({ _id: id }, { session });
+    });
 
-    removed = { applications: apps.length, files: keys.size };
+    removed = { applications: apps.length, files: keys.length };
   } else {
     const jobIds = await Job.distinct("_id", { recruiterId: id });
 
-    if (jobIds.length && (await Application.exists({ jobId: { $in: jobIds } }))) {
-      throw new ApiError(409, "This recruiter has jobs with applications. Block the account instead of deleting it.");
-    }
-
-    await Promise.all([SavedJob.deleteMany({ jobId: { $in: jobIds } }), Job.deleteMany({ recruiterId: id })]);
-    if (target.companyId) await Company.deleteOne({ _id: target.companyId, createdBy: id });
+    await runInTransaction(async (session) => {
+      if (jobIds.length && (await Application.exists({ jobId: { $in: jobIds } }).session(session))) {
+        throw new ApiError(409, "This recruiter has jobs with applications. Block the account instead of deleting it.");
+      }
+      await SavedJob.deleteMany({ jobId: { $in: jobIds } }, { session });
+      await Job.deleteMany({ recruiterId: id }, { session });
+      if (target.companyId) await Company.deleteOne({ _id: target.companyId, createdBy: id }, { session });
+      await User.deleteOne({ _id: id }, { session });
+    });
 
     removed = { jobs: jobIds.length, company: !!target.companyId };
   }
 
-  await User.deleteOne({ _id: id });
+  await Promise.allSettled(keys.map((k) => deletePrivate(k)));
 
   await audit(req, "USER_DELETED", id, { email: target.email, name: target.name, role: target.role, removed });
   res.json({ message: "User deleted", removed });

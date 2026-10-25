@@ -27,7 +27,7 @@ const applicationSchema = new mongoose.Schema(
     stage: { type: String, enum: APPLICATION_STAGES, default: "applied" },
     stageHistory: [stageHistorySchema],
     recruiterNotes: [noteSchema],
-    matchScore: { type: Number, min: 0, max: 100, default: 0 },
+    matchScore: { type: Number, min: 0, max: 100, default: null },
   },
   { timestamps: true }
 );

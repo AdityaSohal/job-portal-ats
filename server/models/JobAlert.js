@@ -17,6 +17,7 @@ const jobAlertSchema = new mongoose.Schema(
     frequency: { type: String, enum: ["daily", "weekly"], default: "daily" },
     isActive: { type: Boolean, default: true },
     lastSentAt: { type: Date },
+    processingUntil: { type: Date },
   },
   { timestamps: true }
 );

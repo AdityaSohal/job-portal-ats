@@ -1,6 +1,7 @@
 import JobAlert from "../models/JobAlert.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { normalizeSkills } from "../utils/skills.js";
 
 const MAX_ALERTS = 5;
 
@@ -12,9 +13,7 @@ const cleanFilters = (f = {}) => {
   if (f.employmentType?.length) out.employmentType = [...new Set(f.employmentType)];
   if (f.exp !== undefined && f.exp !== null) out.exp = Number(f.exp);
   if (f.ctc !== undefined && f.ctc !== null) out.ctc = Number(f.ctc);
-  if (f.skills?.length) {
-    out.skills = [...new Set(f.skills.map((s) => s.trim().toLowerCase()).filter(Boolean))].slice(0, 10);
-  }
+  if (f.skills?.length) out.skills = normalizeSkills(f.skills, 10);
   return out;
 };
 

@@ -39,15 +39,7 @@ const candidateView = (a, withHistory = false) => ({
   ...(withHistory && { history: a.stageHistory.map(({ from, to, at }) => ({ from, to, at })) }),
 });
 
-const audit = (req, action, targetId, meta) =>
-  AuditLog.create({
-    actorId: req.user._id,
-    action,
-    targetType: "Application",
-    targetId,
-    meta,
-    ip: req.ip,
-  });
+const audit = (req, action, targetId, meta) => writeAudit(req, "Application", action, targetId, meta);
 
 
 export const applyToJob = asyncHandler(async (req, res) => {
@@ -57,7 +49,9 @@ export const applyToJob = asyncHandler(async (req, res) => {
     Job.findOne({ _id: jobId, ...visibleNow() }).select("title skills companyId"),
     CandidateProfile.findOne({ userId: req.user._id }),
   ]);
-  if (!job) throw new ApiError(404, "Job not found or no longer accepting applications");
+  if (!(await Company.exists({ _id: job.companyId, status: "approved" }))) {
+    throw new ApiError(404, "Job not found or no longer accepting applications");
+  }
 
   const resume = profile?.resumes.id(resumeId);
   if (!resume) throw new ApiError(404, "Resume not found. Upload a resume to your profile first.");

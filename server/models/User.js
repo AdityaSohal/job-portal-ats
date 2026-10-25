@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
     resetOtpExpires: { type: Date, select: false },
     resetOtpAttempts: { type: Number, default: 0, select: false },
     resetOtpSentAt: { type: Date, select: false },
+
+    emailVerifyOtpHash: { type: String, select: false },
+    emailVerifyOtpExpires: { type: Date, select: false },
+    emailVerifyOtpAttempts: { type: Number, default: 0, select: false },
+    emailVerifyOtpSentAt: { type: Date, select: false },
+    accountNoticeSentAt: { type: Date, select: false },
   },
   { timestamps: true }
 );
@@ -36,7 +42,13 @@ userSchema.set("toJSON", {
     delete ret.resetOtpAttempts;
     delete ret.resetOtpSentAt;
     delete ret.__v;
+    delete ret.emailVerifyOtpHash;
+    delete ret.emailVerifyOtpExpires;
+    delete ret.emailVerifyOtpAttempts;
+    delete ret.emailVerifyOtpSentAt;
+    delete ret.accountNoticeSentAt;
     return ret;
+    
   },
 });
 userSchema.index({ role: 1, createdAt: -1 });

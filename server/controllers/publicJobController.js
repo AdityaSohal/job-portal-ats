@@ -1,13 +1,14 @@
 import Job from "../models/Job.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { normalizeSkills } from "../utils/skills.js";
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const csv = (v) => String(v).split(",").map((s) => s.trim()).filter(Boolean);
 
 const HIDDEN = { recruiterId: 0, reviewedBy: 0, reviewedAt: 0, rejectionReason: 0, __v: 0 };
 
-const COMPANY_FIELDS = "name logoUrl website description industry size location";
+const COMPANY_FIELDS = "name logoUrl website description industry size location status";
 
 export const visibleNow = () => ({
   status: "active",
@@ -36,7 +37,7 @@ export const searchJobs = asyncHandler(async (req, res) => {
     filter["ctcRange.max"] = { $gte: Number(req.query.ctc) };
   }
   if (skills) {
-    const list = csv(skills).map((s) => s.toLowerCase()).slice(0, 10);
+    const list = normalizeSkills(csv(skills), 10);
     if (list.length) filter.skills = { $in: list };
   }
 
@@ -76,6 +77,8 @@ export const getPublicJob = asyncHandler(async (req, res) => {
     .populate("companyId", COMPANY_FIELDS)
     .lean();
 
-  if (!job) throw new ApiError(404, "Job not found");
-  res.json({ job: withCompany(job) });
+  if (!job || job.companyId?.status !== "approved") throw new ApiError(404, "Job not found");
+
+  const { status: _internal, ...company } = job.companyId; // the company's review status stays private
+  res.json({ job: withCompany({ ...job, companyId: company }) });
 });

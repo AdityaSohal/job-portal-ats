@@ -6,6 +6,8 @@ import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { completionBreakdown } from "../utils/profileCompletion.js";
 import { uploadPrivate, deletePrivate, signedDownloadUrl, SIGNED_URL_TTL_SECONDS } from "../utils/cloudinary.js";
+import { normalizeSkills } from "../utils/skills.js";
+import { recomputeForCandidate } from "../utils/matchRecompute.js";
 
 const MAX_RESUMES = 3;
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -24,9 +26,6 @@ const toClient = (profile) => {
 
 const respond = (res, profile, status = 200) =>
   res.status(status).json({ profile: toClient(profile), completion: completionBreakdown(profile) });
-
-const normalizeSkills = (skills) =>
-  [...new Set(skills.map((s) => s.trim().toLowerCase()).filter(Boolean))].slice(0, 30);
 
 const SCALARS = ["headline", "summary", "location", "phone", "experienceYears", "expectedCtc", "preferredWorkMode"];
 
@@ -53,7 +52,12 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   for (const key of SCALARS) {
     if (b[key] !== undefined) profile[key] = b[key] === "" || b[key] === null ? undefined : b[key];
   }
+
+  const skillsBefore = [...profile.skills];
   if (b.skills) profile.skills = normalizeSkills(b.skills);
+  const skillsChanged =
+    skillsBefore.length !== profile.skills.length || skillsBefore.some((s) => !profile.skills.includes(s));
+
   if (b.education) {
     profile.education = b.education.map((e) => ({
       institution: e.institution, degree: e.degree, fieldOfStudy: e.fieldOfStudy,
@@ -71,6 +75,7 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   }
 
   await profile.save();
+  if (skillsChanged) await recomputeForCandidate(req.user._id, profile.skills);
 
   if (b.name !== undefined) {
     req.user.name = b.name;
@@ -84,10 +89,10 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
 const hasBytes = (buf, bytes) => bytes.every((b, i) => buf[i] === b);
 
 const detectKind = (buffer, ext) => {
-  const isPdf = hasBytes(buffer, [0x25, 0x50, 0x44, 0x46, 0x2d]); 
+  const isPdf = hasBytes(buffer, [0x25, 0x50, 0x44, 0x46, 0x2d]); // "%PDF-"
   const isDocx =
     hasBytes(buffer, [0x50, 0x4b, 0x03, 0x04]) && 
-    buffer.includes(Buffer.from("word/document.xml")); 
+    buffer.includes(Buffer.from("word/document.xml"));
   if (ext === ".pdf" && isPdf) return { ext: ".pdf", mimeType: "application/pdf" };
   if (ext === ".docx" && isDocx) return { ext: ".docx", mimeType: DOCX_MIME };
   return null;
@@ -142,7 +147,6 @@ export const deleteResume = asyncHandler(async (req, res) => {
   const key = resume.key;
   resume.deleteOne();
   await profile.save();
-
   const stillInUse = await Application.exists({ candidateId: req.user._id, resumeKey: key });
   if (!stillInUse) await deletePrivate(key);
 

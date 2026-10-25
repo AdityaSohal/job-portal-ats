@@ -1,5 +1,5 @@
 import "./loadEnv.js";
-import "dotenv/config";
+import "dotenv/config"; 
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import mongoose from "mongoose";
 import { connectDB } from "./configs/db.js";
+import { validateEnv } from "./utils/validateEnv.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 import { sanitizeInput } from "./middlewares/sanitize.js";
 
@@ -24,6 +25,8 @@ import savedJobRoutes from "./routes/savedJobRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import cronRoutes from "./routes/cronRoutes.js";
+
+validateEnv(); 
 
 const app = express();
 
@@ -97,7 +100,7 @@ app.use(errorHandler);
 
 export default app;
 
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`Server running on ${PORT}`));
 }

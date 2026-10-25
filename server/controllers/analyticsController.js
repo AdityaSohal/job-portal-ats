@@ -84,7 +84,7 @@ const buildTopJobs = async (jobIds) => {
     title: byId.get(t._id.toString())?.title,
     status: byId.get(t._id.toString())?.status,
     applications: t.applications,
-    avgMatchScore: Math.round(t.avgMatch * 10) / 10,
+    avgMatchScore: t.avgMatch == null ? null : Math.round(t.avgMatch * 10) / 10,
   }));
 };
 

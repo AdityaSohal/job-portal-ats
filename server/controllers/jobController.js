@@ -3,19 +3,22 @@ import Application from "../models/Application.js";
 import SavedJob from "../models/SavedJob.js";
 import ApiError from "../utils/ApiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { normalizeSkills } from "../utils/skills.js";
+import { recomputeForJob } from "../utils/matchRecompute.js";
 
 const FIELDS = [
   "title", "description", "skills", "location", "workMode", "employmentType",
   "minExp", "maxExp", "ctcRange", "openings", "deadline",
 ];
-
-const normalizeSkills = (skills) =>
-  [...new Set(skills.map((s) => s.trim().toLowerCase()).filter(Boolean))].slice(0, 20);
+const REVIEW_PATHS = [
+  "title", "description", "location", "workMode", "employmentType", "skills",
+  "minExp", "maxExp", "ctcRange.min", "ctcRange.max",
+];
 
 const pickFields = (body) => {
   const data = {};
   for (const key of FIELDS) if (body[key] !== undefined) data[key] = body[key];
-  if (data.skills) data.skills = normalizeSkills(data.skills);
+  if (data.skills) data.skills = normalizeSkills(data.skills, 20);
   return data;
 };
 
@@ -37,6 +40,7 @@ export const createJob = asyncHandler(async (req, res) => {
     ...pickFields(req.body),
     recruiterId: req.user._id,
     companyId: req.user.companyId,
+    // status defaults to "pending": an admin must approve it
   });
   checkRanges(job);
   await job.save();
@@ -75,8 +79,8 @@ export const updateJob = asyncHandler(async (req, res) => {
   const job = await Job.findOne({ _id: req.params.id, recruiterId: req.user._id });
   if (!job) throw new ApiError(404, "Job not found");
 
-  if (["closed", "expired"].includes(job.status)) {
-    throw new ApiError(409, "Closed or expired jobs cannot be edited");
+  if (["closed", "expired", "suspended"].includes(job.status)) {
+    throw new ApiError(409, `A ${job.status} job cannot be edited`);
   }
 
   job.set(pickFields(req.body));
@@ -86,19 +90,23 @@ export const updateJob = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Make changes before resubmitting a rejected job");
   }
 
-  const contentChanged = job.isModified("title") || job.isModified("description");
-  if (job.status === "rejected" || (job.status === "active" && contentChanged)) {
+  const skillsChanged = job.isModified("skills");
+  const needsReview = REVIEW_PATHS.some((path) => job.isModified(path));
+
+  if (job.status === "rejected" || (job.status === "active" && needsReview)) {
     job.status = "pending";
     job.rejectionReason = undefined;
   }
 
   await job.save();
+  if (skillsChanged) await recomputeForJob(job._id, job.skills);
+
   res.json({ job });
 });
 
 export const closeJob = asyncHandler(async (req, res) => {
   const job = await Job.findOneAndUpdate(
-    { _id: req.params.id, recruiterId: req.user._id, status: { $in: ["pending", "active"] } },
+    { _id: req.params.id, recruiterId: req.user._id, status: { $in: ["pending", "active", "suspended"] } },
     { status: "closed" },
     { new: true }
   );

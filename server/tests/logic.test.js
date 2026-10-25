@@ -4,6 +4,7 @@ import { allowedFor } from "../utils/applicationStateMachine.js";
 import { STAGE_TRANSITIONS, APPLICATION_STAGES } from "../utils/constants.js";
 import { skillBreakdown } from "../utils/matchScore.js";
 import { computeCompletion } from "../utils/profileCompletion.js";
+import { normalizeSkills } from "../utils/skills.js";
 
 test("recruiters get only forward moves, plus rejection", () => {
   assert.deepEqual(allowedFor("applied", "recruiter"), ["shortlisted", "rejected"]);
@@ -60,10 +61,19 @@ test("match score: partial match is rounded and lists matched and missing skills
   assert.deepEqual(r.missing, ["express"]);
 });
 
-test("match score: a job with no skills, or a candidate with none, scores 0", () => {
-  assert.equal(skillBreakdown(["react"], []).score, 0);
+test("match score: a job with no listed skills is not applicable (null)", () => {
+  assert.equal(skillBreakdown(["react"], []).score, null);
+});
+
+test("match score: a candidate with no skills scores 0", () => {
   assert.equal(skillBreakdown([], ["react"]).score, 0);
   assert.equal(skillBreakdown(undefined, ["react"]).score, 0);
+});
+
+test("skills are normalized to one canonical spelling", () => {
+  assert.deepEqual(normalizeSkills(["NodeJS", "node", "Node.js", "ReactJS", " k8s ", "JS"]), [
+    "node.js", "react", "kubernetes", "javascript",
+  ]);
 });
 
 test("profile completion: an empty profile is 0", () => {

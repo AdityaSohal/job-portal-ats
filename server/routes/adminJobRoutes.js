@@ -2,7 +2,7 @@ import { Router } from "express";
 import { body, param, query } from "express-validator";
 import { protect, authorize } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
-import { ROLES } from "../utils/constants.js";
+import { ROLES, JOB_STATUS } from "../utils/constants.js";
 import { listJobs, approveJob, rejectJob } from "../controllers/adminJobController.js";
 
 const router = Router();
@@ -12,7 +12,7 @@ router.use(protect, authorize(ROLES.ADMIN));
 router.get(
   "/",
   [
-    query("status").optional().isIn(["pending", "active", "closed", "rejected", "expired", "all"]),
+    query("status").optional().isIn([...JOB_STATUS, "all"]),
     query("page").optional().isInt({ min: 1 }),
     query("limit").optional().isInt({ min: 1, max: 50 }),
   ],

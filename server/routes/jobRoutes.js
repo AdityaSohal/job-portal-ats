@@ -3,7 +3,7 @@ import { body, param, query } from "express-validator";
 import { protect, authorize, requireApprovedCompany } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { searchLimiter } from "../middlewares/rateLimiters.js";
-import { ROLES, WORK_MODES, EMPLOYMENT_TYPES, APPLICATION_STAGES } from "../utils/constants.js";
+import { ROLES, WORK_MODES, EMPLOYMENT_TYPES, APPLICATION_STAGES, JOB_STATUS } from "../utils/constants.js";
 import {
   createJob, listMyJobs, getMyJob, updateJob, closeJob, deleteJob,
 } from "../controllers/jobController.js";
@@ -14,6 +14,7 @@ const router = Router();
 const recruiterOnly = [protect, authorize(ROLES.RECRUITER)];
 const idRule = param("id").isMongoId();
 
+// required=true on create, optional on edit
 const jobRules = (required) => {
   const f = (name) => {
     const chain = body(name);
@@ -64,7 +65,7 @@ router.get(
   "/mine",
   recruiterOnly,
   [
-    query("status").optional().isIn(["pending", "active", "closed", "rejected", "expired"]),
+    query("status").optional().isIn(JOB_STATUS),
     query("page").optional().isInt({ min: 1 }),
     query("limit").optional().isInt({ min: 1, max: 50 }),
   ],

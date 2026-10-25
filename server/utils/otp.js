@@ -1,10 +1,9 @@
 import crypto from "crypto";
 
-export const generateOtp = () =>
-  String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+export const generateOtp = () => String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
 
-export const hashOtp = (email, otp) =>
-  crypto.createHmac("sha256", process.env.JWT_SECRET).update(`${email}:${otp}`).digest("hex");
+export const hashOtp = (purpose, email, otp) =>
+  crypto.createHmac("sha256", process.env.OTP_SECRET).update(`${purpose}:${email}:${otp}`).digest("hex");
 
 export const safeEqual = (a, b) => {
   const bufA = Buffer.from(a);

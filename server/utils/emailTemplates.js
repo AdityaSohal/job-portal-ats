@@ -10,8 +10,8 @@ export const otpEmail = (otp, minutes) => ({
     </div>`,
 });
 
-const esc = (s = "") =>
-  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// const esc = (s = "") =>
+//   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export const companyApprovedEmail = (companyName) => ({
   subject: "Your company has been approved",
@@ -136,3 +136,28 @@ export const jobAlertEmail = (alertName, jobs, total, baseUrl) => {
 
   return { subject, text, html };
 };
+
+export const verifyEmailOtp = (otp, minutes) => ({
+  subject: "Verify your email",
+  text: `Your verification code is ${otp}. It expires in ${minutes} minutes. If you didn't sign up, you can ignore this email.`,
+  html: `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px">
+      <h2>Verify your email</h2>
+      <p>Enter this code to finish signing up. It expires in ${minutes} minutes.</p>
+      <p style="font-size:32px;letter-spacing:8px;font-weight:bold;margin:24px 0">${esc(otp)}</p>
+      <p style="color:#666;font-size:13px">If you didn't sign up, you can safely ignore this email.</p>
+    </div>`,
+});
+
+export const accountExistsEmail = () => ({
+  subject: "Someone tried to register with your email",
+  text: "Someone tried to create an account with this email address, but you already have one. If it was you, log in, or use 'Forgot password' if you can't remember your password. If you never finished verifying your email, request a new code on the login page. If it wasn't you, ignore this email.",
+  html: `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:24px">
+      <h2>You already have an account</h2>
+      <p>Someone tried to create an account with this email address.</p>
+      <p>If it was you, log in, or use <strong>Forgot password</strong> if you can't remember your password.
+         If you never finished verifying your email, request a new code on the login page.</p>
+      <p style="color:#666;font-size:13px">If it wasn't you, you can safely ignore this email.</p>
+    </div>`,
+});
