@@ -1,22 +1,43 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import { useAuth } from "./store/auth";
+import { GuestOnly, RequireRole } from "./components/RouteGuards";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
-  const [health, setHealth] = useState("checking...");
-
+  // Ask the server who is logged in (the session lives in an httpOnly cookie)
   useEffect(() => {
-    axios
-      .get("/api/health")
-      .then(({ data }) => setHealth(`API ${data.status}, database ${data.db}`))
-      .catch(() => setHealth("API not reachable"));
+    useAuth.getState().bootstrap();
   }, []);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-        <h1 className="text-2xl font-bold text-indigo-600">Job Portal</h1>
-        <p className="mt-2 text-slate-600">{health}</p>
-      </div>
-    </div>
+    <Routes>
+      <Route path="/" element={<Landing />} />
+
+      <Route element={<GuestOnly />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+      </Route>
+
+      <Route element={<RequireRole roles={["candidate"]} />}>
+        <Route path="/candidate" element={<Dashboard />} />
+      </Route>
+      <Route element={<RequireRole roles={["recruiter"]} />}>
+        <Route path="/recruiter" element={<Dashboard />} />
+      </Route>
+      <Route element={<RequireRole roles={["admin"]} />}>
+        <Route path="/admin" element={<Dashboard />} />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
