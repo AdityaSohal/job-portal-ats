@@ -10,8 +10,8 @@ export const otpEmail = (otp, minutes) => ({
     </div>`,
 });
 
-// const esc = (s = "") =>
-//   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const esc = (s = "") =>
+  String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 export const companyApprovedEmail = (companyName) => ({
   subject: "Your company has been approved",
