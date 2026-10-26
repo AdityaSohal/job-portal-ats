@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import api, { setUnauthorizedHandler } from "../lib/api";
+import { queryClient } from "../lib/queryClient";
 
 const guest = { user: null, company: null, status: "guest" };
 
@@ -8,8 +9,15 @@ export const useAuth = create((set) => ({
   company: null,
   status: "loading", // loading -> authed | guest
 
-  setSession: ({ user, company }) => set({ user, company: company ?? null, status: "authed" }),
-  clear: () => set(guest),
+  setSession: ({ user, company }) => {
+    queryClient.clear(); // never show the previous account's cached data
+    set({ user, company: company ?? null, status: "authed" });
+  },
+
+  clear: () => {
+    queryClient.clear();
+    set(guest);
+  },
 
   bootstrap: async () => {
     try {
@@ -26,6 +34,7 @@ export const useAuth = create((set) => ({
     } catch {
       // the cookie may already be gone; the local session ends either way
     }
+    queryClient.clear();
     set(guest);
   },
 }));

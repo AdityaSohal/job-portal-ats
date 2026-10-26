@@ -15,7 +15,7 @@ export function RequireRole({ roles }) {
   return <Outlet />;
 }
 
-// Login, register and similar pages: logged-in users are sent to their dashboard
+// Login, register and similar pages: logged-in users are sent onwards
 export function GuestOnly() {
   const status = useAuth((s) => s.status);
   const user = useAuth((s) => s.user);
@@ -24,10 +24,11 @@ export function GuestOnly() {
   if (status === "loading") return <Splash />;
   if (status === "authed") {
     const home = homeFor(user.role);
-    // Go back to the page they wanted, but only if it belongs to their own role
+    // Return to the page they wanted: their own dashboard area, or the public job pages
     const from = location.state?.from;
-    const target = from?.pathname?.startsWith(home) ? `${from.pathname}${from.search || ""}` : home;
-    return <Navigate to={target} replace />;
+    const path = from?.pathname || "";
+    const allowed = path.startsWith(home) || path === "/jobs" || path.startsWith("/jobs/");
+    return <Navigate to={allowed ? `${path}${from.search || ""}` : home} replace />;
   }
   return <Outlet />;
 }

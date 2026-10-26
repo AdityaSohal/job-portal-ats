@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
-import { Briefcase, Search, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Briefcase, MapPin, Search, ShieldCheck } from "lucide-react";
 import { useAuth } from "../store/auth";
 import { homeFor } from "../lib/roles";
-import { Logo } from "../components/Logo";
+import SiteHeader from "../components/SiteHeader";
 import IsoScene from "../components/IsoScene";
-import { buttonClass } from "../components/ui";
+import { Button, Input, buttonClass } from "../components/ui";
 
 const FEATURES = [
   { Icon: Search, title: "For candidates", text: "Build a profile, apply in one click, and follow every application from applied to hired." },
@@ -13,30 +14,24 @@ const FEATURES = [
 ];
 
 export default function Landing() {
+  const navigate = useNavigate();
   const status = useAuth((s) => s.status);
   const user = useAuth((s) => s.user);
+  const [q, setQ] = useState("");
+  const [place, setPlace] = useState("");
+
+  const search = (e) => {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    if (q.trim().length >= 2) params.set("q", q.trim());
+    if (place.trim()) params.set("location", place.trim());
+    const qs = params.toString();
+    navigate(qs ? `/jobs?${qs}` : "/jobs");
+  };
 
   return (
     <div className="grid-paper min-h-screen">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <Logo />
-        <nav className="flex items-center gap-2">
-          {status === "authed" ? (
-            <Link to={homeFor(user.role)} className={buttonClass("primary", "sm")}>
-              Open dashboard
-            </Link>
-          ) : (
-            <>
-              <Link to="/login" className={buttonClass("ghost", "sm")}>
-                Log in
-              </Link>
-              <Link to="/register" className={buttonClass("primary", "sm")}>
-                Sign up
-              </Link>
-            </>
-          )}
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-5 pb-16">
         <section className="grid items-center gap-8 py-10 lg:grid-cols-2 lg:py-16">
@@ -47,13 +42,32 @@ export default function Landing() {
             <p className="mt-5 max-w-md text-lg text-ink/70">
               A job portal and applicant tracker that keeps every step visible, from the first application to the signed offer.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/register" className={buttonClass("primary")}>
-                Create an account
+
+            <form onSubmit={search} className="mt-8 grid max-w-xl gap-3 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="relative">
+                <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/50" aria-hidden="true" />
+                <Input className="pl-10" aria-label="Job title or skill" placeholder="Job title or skill" value={q} onChange={(e) => setQ(e.target.value)} />
+              </div>
+              <div className="relative">
+                <MapPin size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink/50" aria-hidden="true" />
+                <Input className="pl-10" aria-label="Location" placeholder="Location" value={place} onChange={(e) => setPlace(e.target.value)} />
+              </div>
+              <Button type="submit">Search</Button>
+            </form>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link to="/jobs" className={buttonClass("secondary", "sm")}>
+                Browse all jobs
               </Link>
-              <Link to="/login" className={buttonClass("secondary")}>
-                Log in
-              </Link>
+              {status === "authed" ? (
+                <Link to={homeFor(user.role)} className={buttonClass("ghost", "sm")}>
+                  Open dashboard
+                </Link>
+              ) : (
+                <Link to="/register" className={buttonClass("ghost", "sm")}>
+                  Create an account
+                </Link>
+              )}
             </div>
           </div>
           <IsoScene className="mx-auto" />

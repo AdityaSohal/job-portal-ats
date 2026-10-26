@@ -2,11 +2,14 @@ import { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import { useAuth } from "./store/auth";
 import { GuestOnly, RequireRole } from "./components/RouteGuards";
+import PublicLayout from "./components/PublicLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
+import Jobs from "./pages/Jobs";
+import JobDetail from "./pages/JobDetail";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
@@ -19,6 +22,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+
+      <Route element={<PublicLayout />}>
+        <Route path="/jobs" element={<Jobs />} />
+        <Route path="/jobs/:id" element={<JobDetail />} />
+      </Route>
 
       <Route element={<GuestOnly />}>
         <Route path="/login" element={<Login />} />
