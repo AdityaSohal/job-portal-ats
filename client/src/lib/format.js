@@ -1,9 +1,16 @@
 const DAY = 86_400_000;
 const dateFmt = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" });
+const dateTimeFmt = new Intl.DateTimeFormat("en-IN", {
+  weekday: "short", day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit",
+});
 const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
 export const cap = (s = "") => s.charAt(0).toUpperCase() + s.slice(1);
 export const formatDate = (d) => dateFmt.format(new Date(d));
+export const formatDateTime = (d) => dateTimeFmt.format(new Date(d));
+
+// "2025-05-01" for <input type="date">
+export const toDateInput = (d) => (d ? new Date(d).toISOString().slice(0, 10) : "");
 
 export const timeAgo = (d) => {
   const diff = new Date(d).getTime() - Date.now();
@@ -51,6 +58,14 @@ export const STAGE_LABEL = {
   rejected: "Not selected",
   withdrawn: "Withdrawn",
   declined: "Offer declined",
+};
+
+export const INTERVIEW_STATUS_LABEL = {
+  scheduled: "Awaiting your confirmation",
+  confirmed: "Confirmed",
+  reschedule_requested: "Reschedule requested",
+  completed: "Completed",
+  cancelled: "Cancelled",
 };
 
 // Skills are stored in the same canonical lowercase form on both sides (the server normalizes them)

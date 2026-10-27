@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { useAuth } from "./store/auth";
 import { GuestOnly, RequireRole } from "./components/RouteGuards";
 import PublicLayout from "./components/PublicLayout";
+import CandidateLayout from "./components/CandidateLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -12,6 +13,13 @@ import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
+import CandidateHome from "./pages/candidate/CandidateHome";
+import MyApplications from "./pages/candidate/MyApplications";
+import ApplicationDetail from "./pages/candidate/ApplicationDetail";
+import SavedJobs from "./pages/candidate/SavedJobs";
+import Profile from "./pages/candidate/Profile";
+import Alerts from "./pages/candidate/Alerts";
+import Settings from "./pages/candidate/Settings";
 
 export default function App() {
   // Ask the server who is logged in (the session lives in an httpOnly cookie)
@@ -36,8 +44,17 @@ export default function App() {
       </Route>
 
       <Route element={<RequireRole roles={["candidate"]} />}>
-        <Route path="/candidate" element={<Dashboard />} />
+        <Route path="/candidate" element={<CandidateLayout />}>
+          <Route index element={<CandidateHome />} />
+          <Route path="applications" element={<MyApplications />} />
+          <Route path="applications/:id" element={<ApplicationDetail />} />
+          <Route path="saved" element={<SavedJobs />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
       </Route>
+
       <Route element={<RequireRole roles={["recruiter"]} />}>
         <Route path="/recruiter" element={<Dashboard />} />
       </Route>
