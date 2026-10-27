@@ -5,6 +5,7 @@ import { GuestOnly, RequireRole } from "./components/RouteGuards";
 import PublicLayout from "./components/PublicLayout";
 import CandidateLayout from "./components/CandidateLayout";
 import RecruiterLayout from "./components/recruiter/RecruiterLayout";
+import AdminLayout from "./components/admin/AdminLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -12,7 +13,6 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
-import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 import CandidateHome from "./pages/candidate/CandidateHome";
 import MyApplications from "./pages/candidate/MyApplications";
@@ -27,6 +27,11 @@ import JobEditor from "./pages/recruiter/JobEditor";
 import Applicants from "./pages/recruiter/Applicants";
 import Interviews from "./pages/recruiter/Interviews";
 import CompanyPage from "./pages/recruiter/CompanyPage";
+import AdminHome from "./pages/admin/AdminHome";
+import AdminCompanies from "./pages/admin/AdminCompanies";
+import AdminJobs from "./pages/admin/AdminJobs";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AuditLog from "./pages/admin/AuditLog";
 
 export default function App() {
   // Ask the server who is logged in (the session lives in an httpOnly cookie)
@@ -75,7 +80,13 @@ export default function App() {
       </Route>
 
       <Route element={<RequireRole roles={["admin"]} />}>
-        <Route path="/admin" element={<Dashboard />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminHome />} />
+          <Route path="companies" element={<AdminCompanies />} />
+          <Route path="jobs" element={<AdminJobs />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="audit" element={<AuditLog />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />
