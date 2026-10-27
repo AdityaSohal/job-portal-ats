@@ -4,6 +4,7 @@ import { useAuth } from "./store/auth";
 import { GuestOnly, RequireRole } from "./components/RouteGuards";
 import PublicLayout from "./components/PublicLayout";
 import CandidateLayout from "./components/CandidateLayout";
+import RecruiterLayout from "./components/recruiter/RecruiterLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,6 +21,12 @@ import SavedJobs from "./pages/candidate/SavedJobs";
 import Profile from "./pages/candidate/Profile";
 import Alerts from "./pages/candidate/Alerts";
 import Settings from "./pages/candidate/Settings";
+import RecruiterHome from "./pages/recruiter/RecruiterHome";
+import MyJobs from "./pages/recruiter/MyJobs";
+import JobEditor from "./pages/recruiter/JobEditor";
+import Applicants from "./pages/recruiter/Applicants";
+import Interviews from "./pages/recruiter/Interviews";
+import CompanyPage from "./pages/recruiter/CompanyPage";
 
 export default function App() {
   // Ask the server who is logged in (the session lives in an httpOnly cookie)
@@ -56,8 +63,17 @@ export default function App() {
       </Route>
 
       <Route element={<RequireRole roles={["recruiter"]} />}>
-        <Route path="/recruiter" element={<Dashboard />} />
+        <Route path="/recruiter" element={<RecruiterLayout />}>
+          <Route index element={<RecruiterHome />} />
+          <Route path="jobs" element={<MyJobs />} />
+          <Route path="jobs/new" element={<JobEditor />} />
+          <Route path="jobs/:id/edit" element={<JobEditor />} />
+          <Route path="jobs/:id/applicants" element={<Applicants />} />
+          <Route path="interviews" element={<Interviews />} />
+          <Route path="company" element={<CompanyPage />} />
+        </Route>
       </Route>
+
       <Route element={<RequireRole roles={["admin"]} />}>
         <Route path="/admin" element={<Dashboard />} />
       </Route>
